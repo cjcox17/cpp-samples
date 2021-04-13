@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// [START cloudrun_helloworld_service]
+// [START cloud_run_hello_world]
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/beast/core.hpp>
@@ -123,3 +125,5 @@ int main(int argc, char* argv[]) try {
   std::cerr << "Standard exception caught " << ex.what() << '\n';
   return 1;
 }
+// [END cloud_run_hello_world]
+// [END cloudrun_helloworld_service]

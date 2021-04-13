@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# [START cloudrun_helloworld_dockerfile]
+# [START dockerfile]
 # We chose Alpine to build the image because it has good support for creating
 # statically-linked, small programs.
 ARG DISTRO_VERSION=edge
@@ -69,3 +71,5 @@ WORKDIR /r
 COPY --from=build /v/binary/cloud_run_hello /r
 
 ENTRYPOINT [ "/r/cloud_run_hello" ]
+# [END dockerfile]
+# [END cloudrun_helloworld_dockerfile]

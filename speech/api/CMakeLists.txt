@@ -1,5 +1,5 @@
 # ~~~
-# Copyright 2020 Google LLC
+# Copyright 2021 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,26 +14,28 @@
 # limitations under the License.
 # ~~~
 
-# [START cloudrun_helloworld_makelist]
 cmake_minimum_required(VERSION 3.10)
 
 # Define the project name and where to report bugs.
 set(PACKAGE_BUGREPORT
     "https://github.com/GoogleCloudPlatform/cpp-samples/issues")
-project(cpp-samples-cloud-run-hello-world CXX C)
+project(cpp-samples-speech-api CXX)
 
-# Configure the Compiler options, we will be using C++17 features.
-set(CMAKE_CXX_STANDARD 17)
+# Configure the Compiler options, we will be using C++11 features.
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Boost 1.66 REQUIRED COMPONENTS program_options)
+find_package(google_cloud_cpp_googleapis REQUIRED)
 find_package(Threads)
 
-add_executable(cloud_run_hello cloud_run_hello.cc)
-target_link_libraries(
-  cloud_run_hello PRIVATE Boost::headers Boost::program_options
-                          Threads::Threads)
+add_library(parse_arguments STATIC parse_arguments.cc parse_arguments.h)
+target_link_libraries(parse_arguments
+                      PUBLIC google-cloud-cpp::cloud_speech_protos)
 
-include(GNUInstallDirs)
-install(TARGETS cloud_run_hello RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-# [END cloudrun_helloworld_makelist]
+foreach(target async_transcribe streaming_transcribe
+               streaming_transcribe_singlethread transcribe)
+  add_executable("${target}" "${target}.cc")
+  target_link_libraries(
+    "${target}" PRIVATE parse_arguments google-cloud-cpp::cloud_speech_protos
+                        Threads::Threads)
+endforeach()

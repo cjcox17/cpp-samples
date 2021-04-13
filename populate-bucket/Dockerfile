@@ -36,27 +36,14 @@ RUN ./bootstrap-vcpkg.sh
 # Create a separate stage where we build all the dependencies.
 FROM devtools AS dependencies
 
-RUN ./vcpkg install --clean-after-build openssl
-RUN ./vcpkg install --clean-after-build curl
-RUN ./vcpkg install --clean-after-build crc32c
-RUN ./vcpkg install --clean-after-build protobuf
-RUN ./vcpkg install --clean-after-build abseil
-RUN ./vcpkg install --clean-after-build grpc
-RUN ./vcpkg install --clean-after-build google-cloud-cpp
-RUN ./vcpkg install --clean-after-build boost-program-options
-RUN ./vcpkg install --clean-after-build boost-asio
-RUN ./vcpkg install --clean-after-build boost-beast
-RUN ./vcpkg install --clean-after-build boost-property-tree
-RUN ./vcpkg install --clean-after-build boost-serialization
-
-FROM base AS with-certs
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt update && \
-    apt-get --no-install-recommends install -y libstdc++6 ca-certificates && \
-    apt-get upgrade -y && \
-    rm -rf /var/cache/apt/*
-RUN update-ca-certificates
-WORKDIR /r
+RUN ./vcpkg install openssl
+RUN ./vcpkg install curl
+RUN ./vcpkg install crc32c
+RUN ./vcpkg install protobuf
+RUN ./vcpkg install abseil
+RUN ./vcpkg install grpc
+RUN ./vcpkg install google-cloud-cpp
+RUN ./vcpkg install boost-program-options
 
 # Copy the source code to /v/source and compile it.
 FROM dependencies AS build
@@ -67,22 +54,21 @@ WORKDIR /v/source
 RUN cmake -S/v/source -B/v/binary -GNinja \
     -DCMAKE_TOOLCHAIN_FILE=/var/tmp/build/vcpkg/scripts/buildsystems/vcpkg.cmake
 
+# Compile the binary and strip it to reduce its size.
 RUN cmake --build /v/binary
-RUN strip /v/binary/pubsub_handler
+RUN strip /v/binary/populate_bucket
 
-FROM with-certs AS pubsub-handler
+# Create the final deployment image, we need the CA certificates, as the
+# application needs to verify the Google SSL certificates.
+FROM base AS populate-bucket
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt update && \
+    apt-get --no-install-recommends install -y libstdc++6 ca-certificates && \
+    rm -rf /var/cache/apt/*
 WORKDIR /r
-COPY --from=build /v/binary/pubsub_handler /r
 
-CMD "/r/pubsub_handler" \
-    "--project=${SPANNER_PROJECT}" \
-    "--instance=${SPANNER_INSTANCE}" \
-    "--database=${SPANNER_DATABASE}"
+# Copy the program from the previously created stage and make it the entry point.
+COPY --from=build /v/binary/populate_bucket /r
 
-FROM with-certs AS tools
-WORKDIR /r
-COPY --from=build /v/binary/create_database /r
-COPY --from=build /v/binary/delete_index_for_bucket /r
-COPY --from=build /v/binary/refresh_index_for_bucket /r
-
+# Make the image fail if invoked with an explicit command line.
 CMD "/bin/false"

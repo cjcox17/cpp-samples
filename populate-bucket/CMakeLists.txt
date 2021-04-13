@@ -14,26 +14,26 @@
 # limitations under the License.
 # ~~~
 
-# [START cloudrun_helloworld_makelist]
 cmake_minimum_required(VERSION 3.10)
 
 # Define the project name and where to report bugs.
 set(PACKAGE_BUGREPORT
     "https://github.com/GoogleCloudPlatform/cpp-samples/issues")
-project(cpp-samples-cloud-run-hello-world CXX C)
+project(populate-bucket CXX)
 
 # Configure the Compiler options, we will be using C++17 features.
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+find_package(google_cloud_cpp_pubsub REQUIRED)
+find_package(google_cloud_cpp_storage REQUIRED)
 find_package(Boost 1.66 REQUIRED COMPONENTS program_options)
 find_package(Threads)
 
-add_executable(cloud_run_hello cloud_run_hello.cc)
+add_executable(populate_bucket populate_bucket.cc)
 target_link_libraries(
-  cloud_run_hello PRIVATE Boost::headers Boost::program_options
-                          Threads::Threads)
+  populate_bucket PRIVATE google-cloud-cpp::pubsub google-cloud-cpp::storage
+                          Boost::program_options Threads::Threads)
 
 include(GNUInstallDirs)
-install(TARGETS cloud_run_hello RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-# [END cloudrun_helloworld_makelist]
+install(TARGETS populate_bucket RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

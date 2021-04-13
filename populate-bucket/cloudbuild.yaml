@@ -12,23 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-timeout: 1800s
+timeout: 3600s
 options:
-  machineType: 'N1_HIGHCPU_8'
+  machineType: 'N1_HIGHCPU_32'
   diskSizeGb: '512'
 substitutions:
   _CONTEXT: 'dir:///workspace/'
 
 steps:
-  # Create a container, use Kaniko to cache the temporary results.
-  - name: 'gcr.io/kaniko-project/executor:edge'
+  - name: 'gcr.io/kaniko-project/executor:latest'
     args: [
         # Using a substitution here allows us to call this script from
         # the top-level directory, as Cloud Build does.
         "--context=${_CONTEXT}",
-        "--dockerfile=Dockerfile",
-        "--cache=true",
         "--cache-repo=gcr.io/${PROJECT_ID}/cpp-samples/ci/cache",
-        "--destination=gcr.io/${PROJECT_ID}/cloud-run-hello",
+        "--destination=gcr.io/${PROJECT_ID}/cpp-samples/populate-bucket:${SHORT_SHA}",
+        "--cache=true",
+        "--cache-ttl=48h"
     ]
-    timeout: 1800s
+    timeout: 3600s
